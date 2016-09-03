@@ -1,9 +1,12 @@
-# Load variables from a seperate file - this when you pull down the latest factory file you can keep your paths / product keys etc...
-param([string]$variables=".\FactoryVariables.ps1")
+param
+(
+    [string]$variables=".\FactoryVariables.ps1",
+	[string]$images
+)
 
+# Load variables from a seperate file - this when you pull down the latest factory file you can keep your paths / product keys etc...
 . $variables
 $startTime = get-date
-
 
 # Helper function to make sure that needed folders are present
 function checkPath
@@ -956,32 +959,69 @@ function Start-ImageFactory
     }
 }
 
+function Process-ImagesFile {
+    if (-not (Test-Path -Path $images -PathType Leaf)) {
+        Write-Host -ForegroundColor Green "CSV Image file not found: $images"
+        Throw 'Missing images csv file'
+    }
+
+    $targets = Import-Csv -Path $images
+    ForEach ($target In $targets) {
+        
+        $ISOFile = $target.Image
+        if (-not (Test-Path -Path $ISOFile -PathType Leaf)) {
+            $ISOFile = [io.path]::Combine($workingDir,"ISOs", $target.Image)
+        }
+
+        $arguments = @{
+            FriendlyName = $target.FriendlyName
+            ISOFile = $ISOFile
+            ProductKey = $target.ProductKey
+            SKUEdition = $target.SKU
+        }
+
+        if ($target.Generation -eq 2) {
+            $arguments.Add("Generation2", $true)
+            $arguments.FriendlyName += " - Gen 2"
+        }
+
+        if ($target.Desktop -eq "TRUE") {
+            $arguments.Add("desktop", $true)
+        }
+
+        Start-ImageFactory @arguments
+    }
+}
+
 if($startfactory) {
-
-    Start-ImageFactory -FriendlyName "Windows Server 2016 DataCenter Core - Gen 2" -ISOFile $2016Image -ProductKey $Windows2016Key -SKUEdition "ServerDataCenterCore" -Generation2;
-    Start-ImageFactory -FriendlyName "Windows Server 2016 DataCenter with GUI - Gen 2" -ISOFile $2016Image -ProductKey $Windows2016Key -SKUEdition "ServerDataCenter" -Generation2;
-    Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter with GUI" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenter";
-    Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter Core" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenterCore";
-    Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter with GUI - Gen 2" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenter" -Generation2;
-    Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter Core - Gen 2" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenterCore" -Generation2;
-    Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter with GUI" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenter";
-    Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter Core" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenterCore";
-    Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter with GUI - Gen 2" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenter" -Generation2;
-    Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter Core - Gen 2" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenterCore" -Generation2;
-    Start-ImageFactory -FriendlyName "Windows Server 2008 R2 DataCenter with GUI" -ISOFile $2008R2Image -ProductKey $Windows2008R2Key -SKUEdition "ServerDataCenter";
-    Start-ImageFactory -FriendlyName "Windows Server 2008 R2 DataCenter Core" -ISOFile $2008R2Image -ProductKey $Windows2008R2Key -SKUEdition "ServerDataCenterCore";
-    Start-ImageFactory -FriendlyName "Windows 8.1 Professional" -ISOFile $81x64Image -ProductKey $Windows81Key -SKUEdition "Professional" -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 8.1 Professional - Gen 2" -ISOFile $81x64Image -ProductKey $Windows81Key -SKUEdition "Professional" -Generation2  -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 8.1 Professional - 32 bit" -ISOFile $81x86Image -ProductKey $Windows81Key -SKUEdition "Professional" -desktop $true -is32bit $true;
-    Start-ImageFactory -FriendlyName "Windows 8 Professional" -ISOFile $8x64Image -ProductKey $Windows8Key -SKUEdition "Professional" -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 8 Professional - Gen 2" -ISOFile $8x64Image -ProductKey $Windows8Key -SKUEdition "Professional" -Generation2 -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 8 Professional - 32 bit" -ISOFile $8x86Image -ProductKey $Windows8Key -SKUEdition "Professional" -desktop $true -is32bit $true;
-    Start-ImageFactory -FriendlyName "Windows 7 Enterprise" -ISOFile $7x64Image -ProductKey $Windows7Key -SKUEdition "Enterprise" -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 7 Enterprise - 32 bit" -ISOFile $7x86Image -ProductKey $Windows7Key -SKUEdition "Enterprise" -desktop $true -is32bit $true;
-    Start-ImageFactory -FriendlyName "Windows 10 Professional" -ISOFile $10x64Image -ProductKey $Windows10Key -SKUEdition "Professional" -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 10 Professional - Gen 2" -ISOFile $10x64Image -ProductKey $Windows10Key -SKUEdition "Professional" -Generation2 -desktop $true;
-    Start-ImageFactory -FriendlyName "Windows 10 Professional - 32 bit" -ISOFile $10x86Image -ProductKey $Windows10Key -SKUEdition "Professional" -desktop $true -is32bit $true;
-
+    if ($images -ne $null) {
+        Process-ImagesFile
+    } else {
+        # process original way
+        Start-ImageFactory -FriendlyName "Windows Server 2016 DataCenter Core - Gen 2" -ISOFile $2016Image -ProductKey $Windows2016Key -SKUEdition "ServerDataCenterCore" -Generation2;
+        Start-ImageFactory -FriendlyName "Windows Server 2016 DataCenter with GUI - Gen 2" -ISOFile $2016Image -ProductKey $Windows2016Key -SKUEdition "ServerDataCenter" -Generation2;
+        Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter with GUI" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenter";
+        Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter Core" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenterCore";
+        Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter with GUI - Gen 2" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenter" -Generation2;
+        Start-ImageFactory -FriendlyName "Windows Server 2012 R2 DataCenter Core - Gen 2" -ISOFile $2012R2Image -ProductKey $Windows2012R2Key -SKUEdition "ServerDataCenterCore" -Generation2;
+        Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter with GUI" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenter";
+        Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter Core" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenterCore";
+        Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter with GUI - Gen 2" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenter" -Generation2;
+        Start-ImageFactory -FriendlyName "Windows Server 2012 DataCenter Core - Gen 2" -ISOFile $2012Image -ProductKey $Windows2012Key -SKUEdition "ServerDataCenterCore" -Generation2;
+        Start-ImageFactory -FriendlyName "Windows Server 2008 R2 DataCenter with GUI" -ISOFile $2008R2Image -ProductKey $Windows2008R2Key -SKUEdition "ServerDataCenter";
+        Start-ImageFactory -FriendlyName "Windows Server 2008 R2 DataCenter Core" -ISOFile $2008R2Image -ProductKey $Windows2008R2Key -SKUEdition "ServerDataCenterCore";
+        Start-ImageFactory -FriendlyName "Windows 8.1 Professional" -ISOFile $81x64Image -ProductKey $Windows81Key -SKUEdition "Professional" -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 8.1 Professional - Gen 2" -ISOFile $81x64Image -ProductKey $Windows81Key -SKUEdition "Professional" -Generation2  -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 8.1 Professional - 32 bit" -ISOFile $81x86Image -ProductKey $Windows81Key -SKUEdition "Professional" -desktop $true -is32bit $true;
+        Start-ImageFactory -FriendlyName "Windows 8 Professional" -ISOFile $8x64Image -ProductKey $Windows8Key -SKUEdition "Professional" -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 8 Professional - Gen 2" -ISOFile $8x64Image -ProductKey $Windows8Key -SKUEdition "Professional" -Generation2 -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 8 Professional - 32 bit" -ISOFile $8x86Image -ProductKey $Windows8Key -SKUEdition "Professional" -desktop $true -is32bit $true;
+        Start-ImageFactory -FriendlyName "Windows 7 Enterprise" -ISOFile $7x64Image -ProductKey $Windows7Key -SKUEdition "Enterprise" -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 7 Enterprise - 32 bit" -ISOFile $7x86Image -ProductKey $Windows7Key -SKUEdition "Enterprise" -desktop $true -is32bit $true;
+        Start-ImageFactory -FriendlyName "Windows 10 Professional" -ISOFile $10x64Image -ProductKey $Windows10Key -SKUEdition "Professional" -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 10 Professional - Gen 2" -ISOFile $10x64Image -ProductKey $Windows10Key -SKUEdition "Professional" -Generation2 -desktop $true;
+        Start-ImageFactory -FriendlyName "Windows 10 Professional - 32 bit" -ISOFile $10x86Image -ProductKey $Windows10Key -SKUEdition "Professional" -desktop $true -is32bit $true;
+    }
 } else {
     If($myinvocation.InvocationName -eq '.') {
         Write-Host 'Start-ImageFactory is ready to use'
