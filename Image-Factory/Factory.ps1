@@ -1,7 +1,7 @@
 param
 (
     [string]$variables=".\FactoryVariables.ps1",
-	[string]$images
+    [string]$images
 )
 
 # Load variables from a seperate file - this when you pull down the latest factory file you can keep your paths / product keys etc...
@@ -290,7 +290,7 @@ function makeUnattendFile
         $ns.AddNamespace("ns", $unattend.DocumentElement.NamespaceURI);
         $node = $unattend.SelectSingleNode("//ns:HideLocalAccountScreen", $ns);
         $node.ParentNode.RemoveChild($node) | Out-Null;
-	}
+    }
     else
     {
         # Desktop needs a user other than "Administrator" to be present
@@ -308,7 +308,7 @@ function makeUnattendFile
             $ns.AddNamespace("ns", $unattend.DocumentElement.NamespaceURI);
             $node = $unattend.SelectSingleNode("//ns:HideLocalAccountScreen", $ns);
             $node.ParentNode.RemoveChild($node) | Out-Null;
-    	}
+        }
     }
      
     if ($is32bit) 
@@ -435,9 +435,9 @@ $updateCheckScriptBlock = {
                 logger "Installing .NET 4.5.2"
                 $InstallDotNet = Start-Process $file -ArgumentList "/q /norestart" -Wait -PassThru 
                 logger ".NET 4.5.2 installation complete"
-            }	
-        }    		
-		
+            }   
+        }           
+        
         logger "Downloading Windows Management Framework 4.0"
         if (!(test-path -Path "C:\Temp"))
         { 
@@ -460,7 +460,7 @@ $updateCheckScriptBlock = {
         }
         Invoke-Expression 'shutdown -r -t 0'
     }
-	
+    
     # Check to see if files need to be unblocked - if they do, do it and reboot
     if ((Get-ChildItem $env:SystemDrive\Bits | `
         Get-Item -Stream "Zone.Identifier" -ErrorAction SilentlyContinue).Count -gt 0)
@@ -501,20 +501,20 @@ $updateCheckScriptBlock = {
 
 
     # Need to add check for Internet connectivity due to Windows 7 driver load timing fail
-	logger "Checking for Internet connection" 
+    logger "Checking for Internet connection" 
     do
     {
         Start-Sleep -Seconds 5;
-		logger "Checking for Internet connection"
+        logger "Checking for Internet connection"
     } until (Test-Connection -computername www.microsoft.com)
-	
+    
     # Run pre-update script if it exists
     if (Test-Path "$env:SystemDrive\Bits\PreUpdateScript.ps1") {
         & "$env:SystemDrive\Bits\PreUpdateScript.ps1"
     }
 
     # Check if any updates are needed - leave a marker if there are
-	logger "Checking for updates" 
+    logger "Checking for updates" 
     if ((Get-WUList).Count -gt 0)
     {
         if (-not (Test-Path $env:SystemDrive\Bits\changesMade.txt))
@@ -582,16 +582,16 @@ $sysprepScriptBlock = {
 
     # Remove Unattend entries from the autorun key if they exist
     foreach ($regvalue in (Get-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run).Property)
-	{
-		if ($regvalue -like "Unattend*")
-		{
-		    # could be multiple unattend* entries
-		    foreach ($unattendvalue in $regvalue)
-		    {
-			    Remove-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run -name $unattendvalue
-		    }
+    {
+        if ($regvalue -like "Unattend*")
+        {
+            # could be multiple unattend* entries
+            foreach ($unattendvalue in $regvalue)
+            {
+                Remove-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run -name $unattendvalue
+            }
         }
-	}
+    }
              
     $unattendedXmlPath = "$ENV:SystemDrive\Bits\Unattend.xml";
     & "$ENV:SystemRoot\System32\Sysprep\Sysprep.exe" `/generalize `/oobe `/shutdown `/unattend:"$unattendedXmlPath";
@@ -601,16 +601,16 @@ $sysprepScriptBlock = {
 $postSysprepScriptBlock = {
     # Remove Unattend entries from the autorun key if they exist
     foreach ($regvalue in (Get-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run).Property)
-	{
-		if ($regvalue -like "Unattend*")
-		{
-		    # could be multiple unattend* entries
-		    foreach ($unattendvalue in $regvalue)
-		    {
-			    Remove-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run -name $unattendvalue
-		    }
+    {
+        if ($regvalue -like "Unattend*")
+        {
+            # could be multiple unattend* entries
+            foreach ($unattendvalue in $regvalue)
+            {
+                Remove-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run -name $unattendvalue
+            }
         }
-	}
+    }
 
     # Run post-sysprep script if it exists
     if (Test-Path "$env:SystemDrive\Bits\PostSysprepScript.ps1") {
@@ -636,14 +636,14 @@ $postSysprepScriptBlock = {
     } 
 
     # Remove Demo user
-	$computer = $env:computername
-	$user = "Demo"
-	if ([ADSI]::Exists("WinNT://$computer/$user"))
-	{
-	    [ADSI]$server = "WinNT://$computer"
-	    $server.delete("user",$user)
-	}
-	
+    $computer = $env:computername
+    $user = "Demo"
+    if ([ADSI]::Exists("WinNT://$computer/$user"))
+    {
+        [ADSI]$server = "WinNT://$computer"
+        $server.delete("user",$user)
+    }
+    
     # Put any code you want to run Post sysprep here
     Invoke-Expression 'shutdown -r -t 0';
 };
@@ -651,9 +651,9 @@ $postSysprepScriptBlock = {
 # This is the main function of this script
 function Start-ImageFactory
 {
-	<#
-			.SYNOPSIS
-			Creates or updates a windows image with the latest windows updates.
+    <#
+            .SYNOPSIS
+            Creates or updates a windows image with the latest windows updates.
 
             .DESCRIPTION
             This function creates fully updated VHD images for deployment as virtual machines.
@@ -663,8 +663,8 @@ function Start-ImageFactory
 
             Much of the configuration is done in FactoryVariables.ps1, which must be edited to suit your environment.
 
-			.PARAMETER FriendlyName
-			Used as the file name for the image.
+            .PARAMETER FriendlyName
+            Used as the file name for the image.
 
             .PARAMETER ISOFile
             The ISO or WIM file to use as the base of the windows image.
@@ -694,7 +694,7 @@ function Start-ImageFactory
 
             Convert-WindowsImage.ps1 from https://gallery.technet.microsoft.com/scriptcenter/Convert-WindowsImageps1-0fe23a8f
 
-			.LINK
+            .LINK
             https://github.com/BenjaminArmstrong/Hyper-V-PowerShell
 
             .EXAMPLE
@@ -706,7 +706,7 @@ function Start-ImageFactory
             .EXAMPLE
             Start-ImageFactory -FriendlyName "Windows 8.1 Professional - 32 bit" -ISOFile c:\path\to\isos\windows81.iso -ProductKey "GCRJD-8NW9H-F2CDX-CCM8D-9D6T9" -SKUEdition "Professional" -desktop $true -is32bit $true
 
-	#>
+    #>
 
 
     param
