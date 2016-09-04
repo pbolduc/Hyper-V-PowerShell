@@ -2,13 +2,20 @@
 
 ## Columns
 
-* **FriendlyName** - Used as the file name for the image.
-* **SKU** - The name of index number of the edition to use from the ISO/WIM file.  eg. "Professional" or "ServerDataCenter"
-* **Arch** - x64 or x86. Used to set Is32Bit parameter. Needed to create the unattend file correctly.
-* **Generation** - Create a generation 1 or 2 virtual machine.
-* **Desktop** - Set to TRUE for desktop windows versions. Creates a regular user account, which is required by the desktop unattended installation.
-* **ProductKey** - The product key to use for the unattended installation.
-* **Image** - The ISO or WIM file to use as the base of the windows image.
-* **SHA1** - The SHA1 hash of Image. Not used by Image Factory.
-* **Version** - [Version of Windows](https://en.wikipedia.org/wiki/Windows_NT). Used to sort file. Not used by Image Factory.
-* **Notes** - User notes. Not used by Image Factory.
+| Column        | Description           |
+| ------------- |  -------------------- |
+| **Name** | Optional. Used as the file name for the image.  If not specified, the Product, Edition, SB, Arch, GUI/Core and Gen1/Gen2 will be used to generate a name.
+| **Product** | The name of the Windows product without the edition, for example 'Windows 10'.
+| **Edition** | The edition such as DataCenter, Standard, Enterprise, Professional, etc
+| **SB** | Servicing Branch or release (such as *1511* or *1607* for Windows 10)
+| **Arch** | x64 or x86. Used to set Is32Bit parameter. Needed to create the unattend file correctly.
+| **GUI** | TRUE/FALSE to install GUI version. For non-server OS, this must be TRUE.
+| **Core** | TRUE/FALSE to install Core version. Only applies to server products that support Core deployments.
+| **Gen1** | Create a Generation 1 virtual machine.
+| **Gen2** | Create a Generation 2  virtual machine.
+| **ProductKey** | The product key to use for the unattended installation.
+| **Image** | The ISO or WIM file to use as the base of the windows image.
+| **SHA1** | The SHA1 hash of Image. Not used by Image Factory. Could be used in future to validate ISO before installing.
+| **Version** | [Version of Windows](https://en.wikipedia.org/wiki/Windows_NT). Used to sort file. Not used by Image Factory.
+| **Sort** | Helper column used to help sorting when using Excel to edit.
+| **Notes** | User notes. Not used by Image Factory.
