@@ -964,141 +964,141 @@ function Process-ImagesFile {
         Write-Host -ForegroundColor Green "CSV Image file not found: $images"
         Throw 'Missing images csv file'
     }
-	
-	function Create-Arguments ($target, [bool]$gui, [int]$generation) {
-		$arguments = @{}
-		
-		$arguments.Add("ISOFile", $target.Image)
-		$arguments.Add("ProductKey", $target.ProductKey)
+    
+    function Create-Arguments ($target, [bool]$gui, [int]$generation) {
+        $arguments = @{}
+        
+        $arguments.Add("ISOFile", $target.Image)
+        $arguments.Add("ProductKey", $target.ProductKey)
  
- 		#
-		
-		if ($target.Name -ne "") {
-			# use the user supplied friendly name
-			$arguments.Add("FriendlyName", $target.Name)
-		} else {
-			# Build FriendlyName compatible with existing system
-			#
-			# <product> <edition> [Core | with GUI] [- Gen 2]
-			# <product> <edition> <servicing branch> [- 32 bit] [- Gen 2]
-			# <product> <edition> <servicing branch> [- Gen 2]
-			$friendlyName = $target.Product + " " + $target.Edition
-			
-			switch ($target.Edition)
-			{
-				"DataCenter" {
-					if ($gui) {
-						$arguments.Add("SKUEdition", "Server" + $target.Edition)
-						$friendlyName += " with GUI";
-					} else {
-						$arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
-						$friendlyName += " Core";
-					}
-				}
-				
-				"Standard" {
-					if ($gui) {
-						$arguments.Add("SKUEdition", "Server" + $target.Edition)
-						$friendlyName += " with GUI";
-					} else {
-						$arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
-						$friendlyName += " Core";
-					}
-				}
-				
-				"Ultimate" {
-					$arguments.Add("SKUEdition", $target.Edition)
-					$arguments.Add("desktop", $true)
-				}
-				
-				"Enterprise" {
-					$arguments.Add("SKUEdition", $target.Edition)
-					$arguments.Add("desktop", $true)
-					# only Enterprise has servicing branches
-					if ($target.SB -ne "") {
-						$friendlyName += " " + $target.SB
-					}
-				}
-				
-				"Professional" {
-					$arguments.Add("SKUEdition", $target.Edition)
-					$arguments.Add("desktop", $true)
-				}
-			}
+        #
+        
+        if ($target.Name -ne "") {
+            # use the user supplied friendly name
+            $arguments.Add("FriendlyName", $target.Name)
+        } else {
+            # Build FriendlyName compatible with existing system
+            #
+            # <product> <edition> [Core | with GUI] [- Gen 2]
+            # <product> <edition> <servicing branch> [- 32 bit] [- Gen 2]
+            # <product> <edition> <servicing branch> [- Gen 2]
+            $friendlyName = $target.Product + " " + $target.Edition
+            
+            switch ($target.Edition)
+            {
+                "DataCenter" {
+                    if ($gui) {
+                        $arguments.Add("SKUEdition", "Server" + $target.Edition)
+                        $friendlyName += " with GUI";
+                    } else {
+                        $arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
+                        $friendlyName += " Core";
+                    }
+                }
+                
+                "Standard" {
+                    if ($gui) {
+                        $arguments.Add("SKUEdition", "Server" + $target.Edition)
+                        $friendlyName += " with GUI";
+                    } else {
+                        $arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
+                        $friendlyName += " Core";
+                    }
+                }
+                
+                "Ultimate" {
+                    $arguments.Add("SKUEdition", $target.Edition)
+                    $arguments.Add("desktop", $true)
+                }
+                
+                "Enterprise" {
+                    $arguments.Add("SKUEdition", $target.Edition)
+                    $arguments.Add("desktop", $true)
+                    # only Enterprise has servicing branches
+                    if ($target.SB -ne "") {
+                        $friendlyName += " " + $target.SB
+                    }
+                }
+                
+                "Professional" {
+                    $arguments.Add("SKUEdition", $target.Edition)
+                    $arguments.Add("desktop", $true)
+                }
+            }
 
-			if ($target.Arch -eq "x86") {
-				$friendlyName += " - 32 bit";
-			}
-			
-			if ($generation -eq 2) {
-				$arguments.Add("Generation2", $true)
-				$friendlyName += " - Gen 2"
-			}
-			
-			$arguments.Add("FriendlyName", $friendlyName)		
-		}
+            if ($target.Arch -eq "x86") {
+                $friendlyName += " - 32 bit";
+            }
+            
+            if ($generation -eq 2) {
+                $arguments.Add("Generation2", $true)
+                $friendlyName += " - Gen 2"
+            }
+            
+            $arguments.Add("FriendlyName", $friendlyName)       
+        }
 
-		if ($target.Arch -eq "x86") {
-			$arguments.Add("Is32Bit", $true)
-		}
+        if ($target.Arch -eq "x86") {
+            $arguments.Add("Is32Bit", $true)
+        }
 
-		return $arguments;
-	}
-		
-	# creates zero or more arguments to be passed to Start-ImageFactory
-	function Create-StartImageFactoryArguments ($target) {
-		$arguments = @()
-		
-		if ($target.GUI -eq "TRUE") {
-		
-			if ($target.Gen1 -eq "TRUE") {
-				$arguments += Create-Arguments -target $target -gui $true -generation 1
-			}
-			
-			if ($target.Gen2 -eq "TRUE") {
-				$arguments += Create-Arguments -target $target -gui $true -generation 2
-			}
-		}
-		
-		if ($target.Core -eq "TRUE") {
-		
-			if ($target.Gen1 -eq "TRUE") {
-				$arguments += Create-Arguments -target $target -gui $false -generation 1
-			}
-			
-			if ($target.Gen2 -eq "TRUE") {
-				$arguments += Create-Arguments -target $target -gui $false -generation 2
-			}
-		}
-		
-		return $arguments;
-	}
+        return $arguments;
+    }
+        
+    # creates zero or more arguments to be passed to Start-ImageFactory
+    function Create-StartImageFactoryArguments ($target) {
+        $arguments = @()
+        
+        if ($target.GUI -eq "TRUE") {
+        
+            if ($target.Gen1 -eq "TRUE") {
+                $arguments += Create-Arguments -target $target -gui $true -generation 1
+            }
+            
+            if ($target.Gen2 -eq "TRUE") {
+                $arguments += Create-Arguments -target $target -gui $true -generation 2
+            }
+        }
+        
+        if ($target.Core -eq "TRUE") {
+        
+            if ($target.Gen1 -eq "TRUE") {
+                $arguments += Create-Arguments -target $target -gui $false -generation 1
+            }
+            
+            if ($target.Gen2 -eq "TRUE") {
+                $arguments += Create-Arguments -target $target -gui $false -generation 2
+            }
+        }
+        
+        return $arguments;
+    }
 
     $targets = Import-Csv -Path $images
     ForEach ($target In $targets) {
-	
-		if ($target.Skip -eq "TRUE" -or $target.Image -eq "") {
-		    #Write-Host -ForegroundColor Green "Skipping $($target)"
-			continue;
-		}
+    
+        if ($target.Skip -eq "TRUE" -or $target.Image -eq "") {
+            #Write-Host -ForegroundColor Green "Skipping $($target)"
+            continue;
+        }
    
         if (-not (Test-Path -Path $target.Image -PathType Leaf)) {
             $ISOFile = [io.path]::Combine($workingDir,"ISOs", $target.Image)
-			if (-not (Test-Path -Path $ISOFile -PathType Leaf)) {
-				$iso = $target.Image
-				$friendlyName = $target.FriendlyName
+            if (-not (Test-Path -Path $ISOFile -PathType Leaf)) {
+                $iso = $target.Image
+                $friendlyName = $target.FriendlyName
                 Write-Host -ForegroundColor Green "ISO/WIM not found [$friendlyName]: $iso"
-				continue;
-			}
-			# save the image
-			$target.Image = $ISOFile		
+                continue;
+            }
+            # save the image
+            $target.Image = $ISOFile        
         }
-		
-		$arguments = Create-StartImageFactoryArguments -target $target
-		ForEach ($arg In $arguments) {
-			#Write-Host $arg.FriendlyName
-			Start-ImageFactory @arguments
-		}
+        
+        $arguments = Create-StartImageFactoryArguments -target $target
+        ForEach ($arg In $arguments) {
+            #Write-Host $arg.FriendlyName
+            Start-ImageFactory @arguments
+        }
     }
 }
 
