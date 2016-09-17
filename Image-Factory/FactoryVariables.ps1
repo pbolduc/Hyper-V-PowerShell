@@ -1,6 +1,5 @@
 # Seperate file for variables - this when you pull down the latest factory file you can keep your paths / product keys etc...
 $workingDir = "C:\FactoryTest"
-#$isoSearchDir = C:\msdn" # optional. if using image file, this dir will be recursively search for images only if image not found in $workingDir\ISOs
 $logFile = "$($workingDir)\Share\Details.csv"
 $ResourceDirectory = "$($workingDir)\Resources" 
 $Organization = "The Power Elite"
@@ -8,6 +7,10 @@ $Owner = "Ben Armstrong"
 $Timezone = "Pacific Standard Time"
 $adminPassword = "P@ssw0rd"
 $userPassword = "P@ssw0rd"
+
+# optional. string or string[]
+# if using image file, this dir will be recursively search for images only if image not found in $workingDir\ISOs
+#$isoSearchDir = "C:\msdn" 
 
 # VM Settings
     # Name of the VM - make sure this does not conflict with any existing virtual machine, because it gets deleted automatically!
