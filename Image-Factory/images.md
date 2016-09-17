@@ -12,7 +12,7 @@ The images CSV file is used to manage the various Windows products, editions and
 | **Name** | Optional. Used as the file name for the image.  If not specified, the Product, Edition, SB, Arch, GUI/Core and Gen1/Gen2 will be used to generate a name.
 | **Product** | The name of the Windows product without the edition, for example 'Windows 10'.
 | **Edition** | The edition such as DataCenter, Standard, Enterprise, Professional, etc
-| **SB** | Servicing Branch or release (such as *1511* or *1607* for Windows 10)
+| **SB** | Servicing Branch or release (such as *1511* or *1607* for Windows 10, LTSB)
 | **Arch** | x64 or x86. Used to set Is32Bit parameter. Needed to create the unattend file correctly.
 | **GUI** | TRUE/FALSE to install GUI version. For non-server OS, this must be TRUE.
 | **Core** | TRUE/FALSE to install Core version. Only applies to server products that support Core deployments.
