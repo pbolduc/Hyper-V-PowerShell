@@ -1,6 +1,11 @@
-# Images CSV File Format
+# Images CSV File
 
-## Columns
+The images CSV file is used to manage the various Windows products, editions and options for running Image Factory.  Each row defines a Windows product, edition and processor architecture.
+
+## File Format
+
+
+### Columns
 
 | Column        | Description           |
 | ------------- |  -------------------- |
@@ -17,5 +22,5 @@
 | **Image** | The ISO or WIM file to use as the base of the windows image.
 | **SHA1** | The SHA1 hash of Image. Not used by Image Factory. Could be used in future to validate ISO before installing.
 | **Version** | [Version of Windows](https://en.wikipedia.org/wiki/Windows_NT). Used to sort file. Not used by Image Factory.
-| **Sort** | Helper column used to help sorting when using Excel to edit.
-| **Notes** | User notes. Not used by Image Factory.
+| **Sort** | User field. Helper column used to help sorting when using Excel to edit.
+| **Notes** | User field. User specific notes. Not used by Image Factory.
