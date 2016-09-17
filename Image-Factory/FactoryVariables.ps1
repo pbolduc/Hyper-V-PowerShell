@@ -1,5 +1,6 @@
 # Seperate file for variables - this when you pull down the latest factory file you can keep your paths / product keys etc...
 $workingDir = "C:\FactoryTest"
+#$isoSearchDir = C:\msdn" # optional. if using image file, this dir will be recursively search for images only if image not found in $workingDir\ISOs
 $logFile = "$($workingDir)\Share\Details.csv"
 $ResourceDirectory = "$($workingDir)\Resources" 
 $Organization = "The Power Elite"

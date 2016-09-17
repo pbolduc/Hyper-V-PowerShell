@@ -965,17 +965,32 @@ function Process-ImagesFile {
         Throw 'Missing images csv file'
     }
     
-    function Create-Arguments ($target, [bool]$gui, [int]$generation) {
-        $arguments = @{}
-        
-        $arguments.Add("ISOFile", $target.Image)
-        $arguments.Add("ProductKey", $target.ProductKey)
- 
-        #
-        
+    <#
+            .SYNOPSIS
+            Creates a friendly name for the target VM.
+
+            .DESCRIPTION
+            This function returns a string friendly name for the VM based on the target parameters.
+            If the target specified a name explicitly, that name is returned. Otherwise, the name will be generated
+			using this pattern:
+            
+                <product> <edition> [Core | with GUI] [- Gen 2]
+                <product> <edition> <servicing branch> [- 32 bit] [- Gen 2]
+                <product> <edition> <servicing branch> [- Gen 2]            
+
+            .PARAMETER target
+            Specifies the target configuration.
+            
+            .PARAMETER gui
+            Specifies if the VM OS will be GUI OS. If not GUI, it will be a Core OS.
+            
+            .PARAMETER generation
+            Specifies the Hyper-V VM generation. 1 or 2.
+    #>
+    function Create-FriendlyName ($target, [bool]$gui, [int]$generation) {
         if ($target.Name -ne "") {
             # use the user supplied friendly name
-            $arguments.Add("FriendlyName", $target.Name)
+            return $target.Name
         } else {
             # Build FriendlyName compatible with existing system
             #
@@ -988,32 +1003,24 @@ function Process-ImagesFile {
             {
                 "DataCenter" {
                     if ($gui) {
-                        $arguments.Add("SKUEdition", "Server" + $target.Edition)
                         $friendlyName += " with GUI";
                     } else {
-                        $arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
                         $friendlyName += " Core";
                     }
                 }
                 
                 "Standard" {
                     if ($gui) {
-                        $arguments.Add("SKUEdition", "Server" + $target.Edition)
                         $friendlyName += " with GUI";
                     } else {
-                        $arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
                         $friendlyName += " Core";
                     }
                 }
                 
                 "Ultimate" {
-                    $arguments.Add("SKUEdition", $target.Edition)
-                    $arguments.Add("desktop", $true)
                 }
                 
                 "Enterprise" {
-                    $arguments.Add("SKUEdition", $target.Edition)
-                    $arguments.Add("desktop", $true)
                     # only Enterprise has servicing branches
                     if ($target.SB -ne "") {
                         $friendlyName += " " + $target.SB
@@ -1021,8 +1028,6 @@ function Process-ImagesFile {
                 }
                 
                 "Professional" {
-                    $arguments.Add("SKUEdition", $target.Edition)
-                    $arguments.Add("desktop", $true)
                 }
             }
 
@@ -1031,12 +1036,64 @@ function Process-ImagesFile {
             }
             
             if ($generation -eq 2) {
-                $arguments.Add("Generation2", $true)
                 $friendlyName += " - Gen 2"
             }
             
-            $arguments.Add("FriendlyName", $friendlyName)       
+            return $friendlyName
         }
+    }
+    
+    function Create-Arguments ($target, [bool]$gui, [int]$generation) {
+        $arguments = @{}
+        
+        $arguments.Add("ISOFile", $target.Image)
+        $arguments.Add("ProductKey", $target.ProductKey)
+ 
+        #
+        $friendlyName = Create-FriendlyName -target $target -gui $gui -generation $generation
+        $arguments.Add("FriendlyName", $friendlyName)
+                    
+        switch ($target.Edition)
+        {
+            "DataCenter" {
+                if ($gui) {
+                    $arguments.Add("SKUEdition", "Server" + $target.Edition)
+                } else {
+                    $arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
+                }
+            }
+            
+            "Standard" {
+                if ($gui) {
+                    $arguments.Add("SKUEdition", "Server" + $target.Edition)
+                } else {
+                    $arguments.Add("SKUEdition", "Server"+ $target.Edition+"Core")
+                }
+            }
+            
+            "Ultimate" {
+                $arguments.Add("SKUEdition", $target.Edition)
+                $arguments.Add("desktop", $true)
+            }
+            
+            "Enterprise" {
+                $arguments.Add("SKUEdition", $target.Edition)
+                $arguments.Add("desktop", $true)
+            }
+            
+            "Professional" {
+                $arguments.Add("SKUEdition", $target.Edition)
+                $arguments.Add("desktop", $true)
+            }
+        }
+
+        if ($target.Arch -eq "x86") {
+        }
+        
+        if ($generation -eq 2) {
+            $arguments.Add("Generation2", $true)
+        }
+        
 
         if ($target.Arch -eq "x86") {
             $arguments.Add("Is32Bit", $true)
@@ -1045,7 +1102,17 @@ function Process-ImagesFile {
         return $arguments;
     }
         
-    # creates zero or more arguments to be passed to Start-ImageFactory
+    <#
+            .SYNOPSIS
+            Creates zero or more arguments to be passed to Start-ImageFactory
+
+            .DESCRIPTION
+            This function returns an array of arguments that can be passed to Start-ImageFactory. 
+            The number of return values depends if the configuration specified a GUI, Core, Generation 1 or Generation 2 VM.
+
+            .PARAMETER target
+            Specifies the target configuration.
+    #>
     function Create-StartImageFactoryArguments ($target) {
         $arguments = @()
         
@@ -1074,6 +1141,30 @@ function Process-ImagesFile {
         return $arguments;
     }
 
+    <#
+            .SYNOPSIS
+            Gets the full path to image in the specified path.
+
+            .DESCRIPTION
+            This function returns the full path or $null if the specified file was not found.
+
+            .PARAMETER image
+            Specifies the image file name to find.
+
+            .PARAMETER path
+            Specifies a path to search.
+    #>
+    function Get-Image($image, $path) {
+        if (Test-Path $path -PathType Container) {
+            $item = Get-ChildItem -Path $path -Filter $image -Recurse
+            if ($item -ne $null) {
+                return $item.FullName
+            }
+        }
+        
+        return $null
+    }
+    
     $targets = Import-Csv -Path $images
     ForEach ($target In $targets) {
     
@@ -1081,23 +1172,36 @@ function Process-ImagesFile {
             #Write-Host -ForegroundColor Green "Skipping $($target)"
             continue;
         }
-   
+        
+        # search in the working ISOs directory if exists
         if (-not (Test-Path -Path $target.Image -PathType Leaf)) {
-            $ISOFile = [io.path]::Combine($workingDir,"ISOs", $target.Image)
-            if (-not (Test-Path -Path $ISOFile -PathType Leaf)) {
-                $iso = $target.Image
-                $friendlyName = $target.FriendlyName
-                Write-Host -ForegroundColor Green "ISO/WIM not found [$friendlyName]: $iso"
-                continue;
+            $workingIsoDir = [io.path]::Combine($workingDir,"ISOs")
+            $image = Get-Image -image $target.Image -path $workingIsoDir
+            if ($image -ne $null) {
+                $target.Image = $image
             }
-            # save the image
-            $target.Image = $ISOFile        
         }
         
+        # search in the iso search directory if specified
+        if (-not (Test-Path -Path $target.Image -PathType Leaf)) {
+            $image = Get-Image -image $target.Image -path $isoSearchDir
+            if ($image -ne $null) {
+                $target.Image = $image
+            }
+        }
+   
+        if (-not (Test-Path -Path $target.Image -PathType Leaf)) {
+            $iso = $target.Image
+            $gui = $target.Core -ne "TRUE"
+            $friendlyName = Create-FriendlyName -target $target -gui $gui -generation $generation
+            Write-Host -ForegroundColor Green "ISO/WIM not found [$friendlyName]: $iso"
+            continue;
+        }
+        
+        # one target could create Gen 1/Gen 2/Core/Gui variations
         $arguments = Create-StartImageFactoryArguments -target $target
         ForEach ($arg In $arguments) {
-            #Write-Host $arg.FriendlyName
-            Start-ImageFactory @arguments
+            Start-ImageFactory @arg
         }
     }
 }
